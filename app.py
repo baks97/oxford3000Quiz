@@ -1,4 +1,3 @@
-# Импорт необходимых библиотек
 import streamlit as st
 import random
 import json
@@ -86,8 +85,8 @@ if st.session_state.page == "start":
                 st.session_state.answers = []
                 st.session_state.show = False
                 st.session_state.page = "quiz"
+                # Удаляем st.experimental_rerun() и перезагружаем страницу с помощью обновления состояния
                 time.sleep(0.01)
-                st.experimental_rerun()
 
     st.write("Или:")
     if st.button("📂 Показать весь файл"):
@@ -96,11 +95,9 @@ if st.session_state.page == "start":
         st.session_state.view_all = True
         st.session_state.page = "quiz"
         time.sleep(0.01)
-        st.experimental_rerun()
 
     if st.button("📊 Показать статистику"):
         st.session_state.page = "stats"
-        st.experimental_rerun()
 
 # Квиз
 elif st.session_state.page == "quiz":
@@ -127,13 +124,11 @@ elif st.session_state.page == "quiz":
                 st.session_state.show = False
             else:
                 st.session_state.page = "result"
-            st.experimental_rerun()
 
     with col2:
         label = "🔽 Показать значение" if not st.session_state.show else "🔼 Скрыть значение"
         if st.button(label):
             st.session_state.show = not st.session_state.show
-            st.experimental_rerun()
 
     with col3:
         if st.button("❌ Неправильно"):
@@ -146,7 +141,6 @@ elif st.session_state.page == "quiz":
                 st.session_state.show = False
             else:
                 st.session_state.page = "result"
-            st.experimental_rerun()
 
     if st.session_state.show:
         st.markdown(word["rest"])
@@ -178,7 +172,6 @@ elif st.session_state.page == "result":
     if st.button("🔁 Начать заново"):
         st.session_state.page = "start"
         st.session_state.view_all = False
-        st.experimental_rerun()
 
 # Статистика
 elif st.session_state.page == "stats":
@@ -192,4 +185,3 @@ elif st.session_state.page == "stats":
 
     if st.button("⬅ Назад"):
         st.session_state.page = "start"
-        st.experimental_rerun()
