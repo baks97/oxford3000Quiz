@@ -73,7 +73,7 @@ if st.session_state.page == "start":
                 st.session_state.correct = []
                 st.session_state.incorrect = []
                 st.session_state.show = False
-                st.experimental_rerun()
+                st.stop()  # завершает выполнение, без перезагрузки
 
     st.markdown("---")
     if st.button("📂 Показать весь список слов"):
