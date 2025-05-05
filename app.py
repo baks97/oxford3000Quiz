@@ -1,82 +1,50 @@
 import streamlit as st
-import time
 import random
 
-# Загружаем и парсим данные
-def parse_md_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
+# Пример списка слов
+words = [
+    {"word": "abandon", "transcription": "/əˈbændən/", "part_of_speech": "verb", "definition": "to leave somebody", "examples": ["The baby had been abandoned by its mother."]},
+    {"word": "abandoned", "transcription": "/əˈbændənd/", "part_of_speech": "adjective", "definition": "left and no longer wanted", "examples": ["An abandoned car."]},
+    # Добавьте больше слов по вашему желанию
+]
 
-    words = []
-    word = {}
-
-    for line in lines:
-        line = line.strip()
-
-        if line.startswith("## 🔤"):
-            if word:
-                words.append(word)
-            word = {'word': line[3:].strip()}  # Сохраняем слово, удаляя "## 🔤"
-        elif line.startswith("**//"):
-            word['transcription'] = line[2:-2]  # Убираем лишние символы вокруг транскрипции
-        elif line.startswith("*"):
-            word['part_of_speech'] = line[1:-1].strip()  # Часть речи
-        elif line.startswith("### 📘 Oxford"):
-            word['meaning'] = line
-        elif line.startswith("### 🌍 Переводы (Cambridge)"):
-            word['translation'] = line
-        elif line.startswith("### 🧾 Примеры"):
-            word['examples'] = line
-
-    if word:
-        words.append(word)  # Добавляем последнее слово
-
-    return words
-
-# Инициализация сессии
-if 'index' not in st.session_state:
+# Инициализация переменных
+if "index" not in st.session_state:
     st.session_state.index = 0
-if 'answers' not in st.session_state:
-    st.session_state.answers = []
-if 'show' not in st.session_state:
+if "show" not in st.session_state:
     st.session_state.show = False
+if "answers" not in st.session_state:
+    st.session_state.answers = []
 
-# Настройки и выбор количества слов
-words_all = parse_md_file("quiz.md")
-words_to_show = words_all[:7]  # Пример ограничения на 7 слов, можно менять по желанию
+# Выбор количества слов
+words_to_show = st.radio("Выберите количество слов", (7, 15, 20, 25), index=1)
 
-# Логика отображения для каждого слова
-word = words_to_show[st.session_state.index]
+# Показать слово
+word = words[st.session_state.index]
+
+# Кнопки для выбора правильного/неправильного ответа
+col1, col2, col3 = st.columns([1, 2, 1])
+with col1:
+    if st.button("✅ Правильно"):
+        # Здесь не обновляется статистика, просто идем к следующему слову
+        st.session_state.index += 1
+        st.session_state.show = False
+
+with col3:
+    if st.button("❌ Неправильно"):
+        # Здесь тоже не обновляется статистика, просто идем к следующему слову
+        st.session_state.index += 1
+        st.session_state.show = False
+
+# Кнопка "Показать значение"
+if st.button("Показать значение"):
+    st.session_state.show = not st.session_state.show
+
+# Отображение информации о слове
 st.write(f"Слово: {word['word']}")
 st.write(f"Транскрипция: {word['transcription']}")
 st.write(f"Часть речи: {word['part_of_speech']}")
 
-# Кнопка для показа/скрытия значения
-if st.button("Показать/Скрыть значение"):
-    st.session_state.show = not st.session_state.show
-    if st.session_state.show:
-        st.write(f"Значение: {word['meaning']}")
-        st.write(f"Перевод: {word['translation']}")
-        st.write(f"Примеры: {word['examples']}")
-
-# Кнопки для правильных/неправильных ответов
-col1, col2 = st.columns([1, 1])
-
-with col1:
-    if st.button("✅ Правильно"):
-        st.session_state.answers.append((word['word'], True))
-
-with col2:
-    if st.button("❌ Неправильно"):
-        st.session_state.answers.append((word['word'], False))
-
-# Логика перехода к следующему слову или завершению квиза
-if st.session_state.index + 1 < len(words_to_show):
-    st.session_state.index += 1
-else:
-    st.session_state.page = "result"
-    st.write("Квиз завершен")
-
-# Переход в начало
-if st.session_state.page == "result":
-    st.write("Результаты квиза")
+if st.session_state.show:
+    st.write(f"Значение: {word['definition']}")
+    st.write(f"Примеры: {', '.join(word['examples'])}")
