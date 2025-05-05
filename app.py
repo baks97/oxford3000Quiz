@@ -1,49 +1,53 @@
 import streamlit as st
 import random
+import time
 import json
-import os
-import re
 
 MD_FILE = "quiz.md"
-STATS_FILE = "stats.json"
 
-# Чтение и парсинг .md файла
-def parse_md_file(filepath):
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    blocks = content.split("## 🔤 ")
+def parse_md_file(filename):
+    with open(filename, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip()]
+    
     words = []
-    for block in blocks[1:]:
-        lines = block.strip().splitlines()
-        word = lines[0].strip()
-        transcription = lines[1].strip() if len(lines) > 1 else ""
-        part_of_speech = lines[2].strip() if len(lines) > 2 else ""
+    i = 0
+    while i < len(lines):
+        if lines[i].startswith("## 🔤 "):
+            word_entry = {
+                "word": lines[i][5:].strip(),
+                "transcription": lines[i+1] if i+1 < len(lines) else "",
+                "part_of_speech": lines[i+2] if i+2 < len(lines) else "",
+                "examples": "",
+                "extra": "",
+            }
 
-        examples_oxford = []
-        cambridge_block = []
-        loading = False
+            # Поиск блока ### 🧾
+            for j in range(i+3, len(lines)):
+                if lines[j].startswith("### 🧾"):
+                    examples_start = j
+                    break
+            else:
+                examples_start = None
 
-        for i, line in enumerate(lines):
-            if line.startswith("### 🧾"):
-                loading = "examples"
-            elif line.startswith("### 🌍"):
-                loading = "cambridge"
-            elif line.startswith("###"):
-                loading = False
-            elif loading == "examples":
-                examples_oxford.append(line)
-            elif loading == "cambridge":
-                cambridge_block.append(line)
+            # Поиск следующего слова
+            for j in range(i+1, len(lines)):
+                if lines[j].startswith("## 🔤 "):
+                    next_word_start = j
+                    break
+            else:
+                next_word_start = len(lines)
 
-        words.append({
-            "word": word,
-            "transcription": transcription,
-            "part_of_speech": part_of_speech,
-            "examples": "\n".join(examples_oxford).strip(),
-            "cambridge": "\n".join(cambridge_block).strip()
-        })
+            if examples_start is not None:
+                word_entry["examples"] = "\n".join(lines[examples_start:next_word_start])
+                word_entry["extra"] = "\n".join(lines[i+3:examples_start])
+            else:
+                word_entry["examples"] = ""
+                word_entry["extra"] = "\n".join(lines[i+3:next_word_start])
 
+            words.append(word_entry)
+            i = next_word_start
+        else:
+            i += 1
     return words
 
 # Загрузка и сохранение статистики
@@ -73,19 +77,44 @@ if "stats" not in st.session_state:
 
 # Начальный экран
 if st.session_state.page == "start":
-    st.title("🧠 Английский квиз по словам")
-    st.subheader("Выберите количество слов:")
+st.title("🧠 Английский квиз по словам")
 
-    cols = st.columns(4)
-    for i, count in enumerate([7, 15, 20, 25]):
-        if cols[i].button(str(count)):
-            all_words = parse_md_file(MD_FILE)
-            random.shuffle(all_words)
-            st.session_state.words = all_words[:count]
-            st.session_state.index = 0
-            st.session_state.answers = []
-            st.session_state.show = False
-            st.session_state.page = "quiz"
+if "page" not in st.session_state:
+    st.session_state.page = "start"
+if "words" not in st.session_state:
+    st.session_state.words = []
+if "index" not in st.session_state:
+    st.session_state.index = 0
+if "show" not in st.session_state:
+    st.session_state.show = False
+if "answers" not in st.session_state:
+    st.session_state.answers = []
+if "stats" not in st.session_state:
+    st.session_state.stats = {}
+if "seed" not in st.session_state:
+    st.session_state.seed = None
+
+if st.session_state.page == "start":
+    st.subheader("Выберите количество слов для квиза:")
+
+    col1, col2, col3, col4 = st.columns(4)
+    for col, n in zip([col1, col2, col3, col4], [7, 15, 20, 25]):
+        with col:
+            if st.button(f"{n} слов"):
+                st.session_state.seed = random.randint(1, 999999)
+                random.seed(st.session_state.seed)
+                all_words = parse_md_file(MD_FILE)
+                st.session_state.words = random.sample(all_words, n)
+                st.session_state.page = "quiz"
+                st.session_state.index = 0
+                st.session_state.answers = []
+                st.session_state.show = False
+                st.experimental_rerun()
+
+    st.write("📂 Или показать весь список слов")
+    if st.button("Показать весь файл"):
+        st.session_state.page = "full"
+        st.experimental_rerun()
 
     st.write("Или:")
     if st.button("📂 Показать весь файл"):
