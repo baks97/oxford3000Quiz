@@ -1,12 +1,13 @@
 import streamlit as st
 import random
 import json
-from pathlib import Path
+import os
 
 MD_FILE = "quiz.md"
 STATS_FILE = "stats.json"
 
-# =================== Парсинг markdown =========================
+st.set_page_config(layout="wide", page_title="🧠 Английский квиз", page_icon="🧠")
+
 def parse_md_file(filename):
     with open(filename, "r", encoding="utf-8") as f:
         content = f.read()
@@ -16,15 +17,18 @@ def parse_md_file(filename):
     for entry in entries[1:]:
         lines = entry.strip().splitlines()
         if len(lines) < 3:
-            continue  # пропускаем неполный блок
+            continue
 
         word = lines[0].strip()
         transcription = lines[1].strip()
         part_of_speech = lines[2].strip()
 
         example_start = next((i for i, line in enumerate(lines) if line.strip().startswith("### 🧾")), None)
-        rest_info = "\n".join(lines[3:example_start]) if example_start else ""
-        examples = "\n".join(lines[example_start:]) if example_start else ""
+        if example_start is None:
+            continue
+
+        rest_info = "\n".join(lines[3:example_start])
+        examples = "\n".join(lines[example_start:])
 
         words.append({
             "word": word,
@@ -36,148 +40,127 @@ def parse_md_file(filename):
 
     return words
 
-# =================== Загрузка и сохранение статистики =========================
 def load_stats():
-    if Path(STATS_FILE).exists():
+    if os.path.exists(STATS_FILE):
         with open(STATS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {}
 
 def save_stats(stats):
     with open(STATS_FILE, "w", encoding="utf-8") as f:
-        json.dump(stats, f, ensure_ascii=False, indent=2)
-
-# =================== Streamlit интерфейс =========================
-
-st.set_page_config(page_title="Английский Квиз", layout="centered")
-
-if "page" not in st.session_state:
-    st.session_state.page = "menu"
-    st.session_state.words = []
-    st.session_state.current = 0
-    st.session_state.correct = []
-    st.session_state.incorrect = []
-    st.session_state.show = False
+        json.dump(stats, f, indent=2, ensure_ascii=False)
 
 words_all = parse_md_file(MD_FILE)
+stats = load_stats()
 
-# ===== Главный экран =====
-if st.session_state.page == "menu":
+if "page" not in st.session_state:
+    st.session_state.page = "start"
+
+if st.session_state.page == "start":
     st.title("🧠 Английский квиз по словам")
-    st.write("Выберите количество слов:")
+    st.subheader("Выберите количество слов:")
 
     col1, col2, col3, col4 = st.columns(4)
     for col, n in zip([col1, col2, col3, col4], [7, 15, 20, 25]):
         if col.button(f"{n} слов"):
-            selected = random.sample(words_all, n)
-            st.session_state.words = selected
-            st.session_state.page = "quiz"
-            st.session_state.current = 0
-            st.session_state.correct = []
-            st.session_state.incorrect = []
-            st.session_state.show = False
-            st.experimental_rerun()
+            if len(words_all) < n:
+                st.error(f"Недостаточно слов в файле для {n} слов.")
+            else:
+                selected = random.sample(words_all, n)
+                st.session_state.words = selected
+                st.session_state.page = "quiz"
+                st.session_state.current = 0
+                st.session_state.correct = []
+                st.session_state.incorrect = []
+                st.session_state.show = False
+                st.experimental_rerun()
 
-    st.markdown("### 📊 Или посмотрите статистику")
-    if st.button("Показать статистику"):
+    st.markdown("---")
+    if st.button("📂 Показать весь список слов"):
+        st.session_state.page = "all"
+        st.experimental_rerun()
+
+    if st.button("📊 Показать статистику"):
         st.session_state.page = "stats"
         st.experimental_rerun()
 
-    if st.button("Показать весь список слов"):
-        st.session_state.page = "all_words"
-        st.experimental_rerun()
-
-# ===== Экран квиза =====
 elif st.session_state.page == "quiz":
     idx = st.session_state.current
     word = st.session_state.words[idx]
 
-    st.markdown(f"## 🔤 {word['word']}")
-    st.markdown(word['transcription'])
-    st.markdown(word['pos'])
-    st.markdown("### 🧾 Примеры (Oxford)")
+    st.markdown(f"### 🔤 {word['word']}")
+    st.markdown(f"{word['transcription']}")
+    st.markdown(f"{word['pos']}")
+    st.markdown("---")
     st.markdown(word['examples'])
 
     col1, col2, col3 = st.columns([1, 1, 1])
-
     with col1:
-        if st.button("✅ Правильно", key=f"right_{idx}"):
-            st.session_state.correct.append(word['word'])
+        if st.button("✅ Правильно"):
+            st.session_state.correct.append(word)
+            stats[word["word"]] = stats.get(word["word"], {"correct": 0, "incorrect": 0})
+            stats[word["word"]]["correct"] += 1
+            save_stats(stats)
             st.session_state.current += 1
             st.session_state.show = False
             st.experimental_rerun()
-
     with col2:
-        if st.button("❌ Неправильно", key=f"wrong_{idx}"):
-            st.session_state.incorrect.append(word['word'])
+        if st.button("❌ Неправильно"):
+            st.session_state.incorrect.append(word)
+            stats[word["word"]] = stats.get(word["word"], {"correct": 0, "incorrect": 0})
+            stats[word["word"]]["incorrect"] += 1
+            save_stats(stats)
             st.session_state.current += 1
             st.session_state.show = False
             st.experimental_rerun()
-
     with col3:
-        if st.button("👁 Показать значение" if not st.session_state.show else "🙈 Скрыть значение", key=f"show_{idx}"):
+        if st.button("👁 Показать значение" if not st.session_state.show else "🙈 Скрыть значение"):
             st.session_state.show = not st.session_state.show
-            st.experimental_rerun()
 
     if st.session_state.show:
+        st.markdown("---")
         st.markdown(word["rest"])
 
-    # Завершение
     if st.session_state.current >= len(st.session_state.words):
-        # обновим статистику
-        stats = load_stats()
-        for w in st.session_state.correct:
-            stats.setdefault(w, {"right": 0, "wrong": 0})
-            stats[w]["right"] += 1
-        for w in st.session_state.incorrect:
-            stats.setdefault(w, {"right": 0, "wrong": 0})
-            stats[w]["wrong"] += 1
-        save_stats(stats)
-
-        st.session_state.page = "results"
+        st.session_state.page = "result"
         st.experimental_rerun()
 
-# ===== Результаты =====
-elif st.session_state.page == "results":
-    st.title("📋 Результаты")
-
-    st.success(f"✅ Правильных: {len(st.session_state.correct)}")
-    st.error(f"❌ Неправильных: {len(st.session_state.incorrect)}")
+elif st.session_state.page == "result":
+    st.title("✅ Результаты")
+    st.success(f"Правильных: {len(st.session_state.correct)}")
+    st.error(f"Неправильных: {len(st.session_state.incorrect)}")
 
     if st.session_state.incorrect:
-        st.markdown("### ❗ Слова с ошибками:")
-        for word in st.session_state.words:
-            if word["word"] in st.session_state.incorrect:
-                st.markdown(f"**{word['word']}** {word['transcription']} {word['pos']}")
-                st.markdown(word["examples"])
-                st.markdown(word["rest"])
+        st.markdown("### ❌ Ошибки:")
+        for word in st.session_state.incorrect:
+            st.markdown(f"**{word['word']}** {word['transcription']} {word['pos']}")
+            st.markdown(word["examples"])
+            st.markdown("---")
 
     if st.button("🔁 Начать заново"):
-        st.session_state.page = "menu"
+        st.session_state.page = "start"
         st.experimental_rerun()
 
-# ===== Статистика =====
+elif st.session_state.page == "all":
+    st.title("📖 Полный список слов")
+    for word in sorted(words_all, key=lambda w: w["word"].lower()):
+        st.markdown(f"### 🔤 {word['word']}")
+        st.markdown(f"{word['transcription']}")
+        st.markdown(f"{word['pos']}")
+        st.markdown(word["examples"])
+        st.markdown("---")
+
+    if st.button("⬅️ Назад"):
+        st.session_state.page = "start"
+        st.experimental_rerun()
+
 elif st.session_state.page == "stats":
     st.title("📊 Статистика")
-    stats = load_stats()
-    for word in sorted(stats.keys()):
-        entry = stats[word]
-        st.markdown(f"**{word}** — ✅ {entry['right']} / ❌ {entry['wrong']}")
-    if st.button("🔙 Назад"):
-        st.session_state.page = "menu"
-        st.experimental_rerun()
-
-# ===== Весь список =====
-elif st.session_state.page == "all_words":
-    st.title("📚 Весь список слов")
-    for word in sorted(words_all, key=lambda w: w["word"].lower()):
-        st.markdown(f"## 🔤 {word['word']}")
-        st.markdown(word['transcription'])
-        st.markdown(word['pos'])
-        st.markdown("### 🧾 Примеры (Oxford)")
-        st.markdown(word['examples'])
-        st.markdown(word["rest"])
-        st.markdown("---")
-    if st.button("🔙 Назад"):
-        st.session_state.page = "menu"
+    if not stats:
+        st.info("Статистика пока пуста.")
+    else:
+        for word, data in stats.items():
+            st.markdown(f"**{word}** — ✅ {data['correct']} / ❌ {data['incorrect']}")
+    if st.button("⬅️ Назад"):
+        st.session_state.page = "start"
         st.experimental_rerun()
