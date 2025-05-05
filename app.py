@@ -1,10 +1,14 @@
+# Подготовка финальной версии кода квиза в виде одного файла, с учетом всех требований
+quiz_code = """
 import streamlit as st
 import random
-import time
 import json
+import os
 
 MD_FILE = "quiz.md"
+STATS_FILE = "stats.json"
 
+# Чтение и парсинг MD-файла
 def parse_md_file(filename):
     with open(filename, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
@@ -21,7 +25,6 @@ def parse_md_file(filename):
                 "extra": "",
             }
 
-            # Поиск блока ### 🧾
             for j in range(i+3, len(lines)):
                 if lines[j].startswith("### 🧾"):
                     examples_start = j
@@ -29,7 +32,6 @@ def parse_md_file(filename):
             else:
                 examples_start = None
 
-            # Поиск следующего слова
             for j in range(i+1, len(lines)):
                 if lines[j].startswith("## 🔤 "):
                     next_word_start = j
@@ -38,11 +40,11 @@ def parse_md_file(filename):
                 next_word_start = len(lines)
 
             if examples_start is not None:
-                word_entry["examples"] = "\n".join(lines[examples_start:next_word_start])
-                word_entry["extra"] = "\n".join(lines[i+3:examples_start])
+                word_entry["examples"] = "\\n".join(lines[examples_start:next_word_start])
+                word_entry["extra"] = "\\n".join(lines[i+3:examples_start])
             else:
                 word_entry["examples"] = ""
-                word_entry["extra"] = "\n".join(lines[i+3:next_word_start])
+                word_entry["extra"] = "\\n".join(lines[i+3:next_word_start])
 
             words.append(word_entry)
             i = next_word_start
@@ -50,7 +52,7 @@ def parse_md_file(filename):
             i += 1
     return words
 
-# Загрузка и сохранение статистики
+# Статистика: чтение и запись
 def load_stats():
     if os.path.exists(STATS_FILE):
         with open(STATS_FILE, "r", encoding="utf-8") as f:
@@ -61,41 +63,26 @@ def save_stats(stats):
     with open(STATS_FILE, "w", encoding="utf-8") as f:
         json.dump(stats, f, ensure_ascii=False, indent=2)
 
-# Инициализация состояний
+# Начальные значения
 if "page" not in st.session_state:
     st.session_state.page = "start"
 if "words" not in st.session_state:
     st.session_state.words = []
 if "index" not in st.session_state:
     st.session_state.index = 0
-if "answers" not in st.session_state:
-    st.session_state.answers = []
 if "show" not in st.session_state:
     st.session_state.show = False
+if "answers" not in st.session_state:
+    st.session_state.answers = []
 if "stats" not in st.session_state:
     st.session_state.stats = load_stats()
-
-# Начальный экран
-if st.session_state.page == "start":
-st.title("🧠 Английский квиз по словам")
-
-if "page" not in st.session_state:
-    st.session_state.page = "start"
-if "words" not in st.session_state:
-    st.session_state.words = []
-if "index" not in st.session_state:
-    st.session_state.index = 0
-if "show" not in st.session_state:
-    st.session_state.show = False
-if "answers" not in st.session_state:
-    st.session_state.answers = []
-if "stats" not in st.session_state:
-    st.session_state.stats = {}
 if "seed" not in st.session_state:
     st.session_state.seed = None
 
+# Стартовая страница
 if st.session_state.page == "start":
-    st.subheader("Выберите количество слов для квиза:")
+    st.title("🧠 Английский квиз по словам")
+    st.subheader("Выберите количество слов:")
 
     col1, col2, col3, col4 = st.columns(4)
     for col, n in zip([col1, col2, col3, col4], [7, 15, 20, 25]):
@@ -116,77 +103,100 @@ if st.session_state.page == "start":
         st.session_state.page = "full"
         st.experimental_rerun()
 
-    st.write("Или:")
-    if st.button("📂 Показать весь файл"):
-        st.session_state.words = sorted(parse_md_file(MD_FILE), key=lambda x: x["word"].lower())
-        st.session_state.page = "all"
-
-    if st.button("📈 Показать статистику"):
+    if st.button("📊 Показать статистику"):
         st.session_state.page = "stats"
+        st.experimental_rerun()
 
-# Экран статистики
-elif st.session_state.page == "stats":
-    st.title("📊 Статистика")
-    stats = st.session_state.stats
-    for word, record in stats.items():
-        st.markdown(f"**{word}** — ✅ {record.get('right', 0)}, ❌ {record.get('wrong', 0)}")
-
-    if st.button("🔙 Назад"):
-        st.session_state.page = "start"
-
-# Экран всего файла
-elif st.session_state.page == "all":
-    st.title("📚 Все слова")
-    for word in st.session_state.words:
-        st.markdown(f"### {word['word']}")
-        st.markdown(word['transcription'])
-        st.markdown(word['part_of_speech'])
-        st.markdown(word['examples'])
-        st.markdown(word['cambridge'])
-
-    if st.button("🔙 Назад"):
-        st.session_state.page = "start"
-
-# Основной квиз
+# Квиз
 elif st.session_state.page == "quiz":
+    word = st.session_state.words[st.session_state.index]
+
+    st.markdown(f"## {word['word']}")
+    st.markdown(f"**{word['transcription']}**")
+    st.markdown(f"*{word['part_of_speech']}*")
+    st.markdown("---")
+    st.markdown("### 🧾 Примеры (Oxford)")
+    st.markdown(word['examples'])
+
+    if st.session_state.show:
+        st.markdown(word['extra'])
+
+    col1, col2, col3 = st.columns([1,2,1])
+    with col1:
+        if st.button("❌ Неправильно"):
+            st.session_state.answers.append((word['word'], False))
+            st.session_state.stats.setdefault(word['word'], {"right": 0, "wrong": 0})
+            st.session_state.stats[word['word']]["wrong"] += 1
+            save_stats(st.session_state.stats)
+            st.session_state.index += 1
+            st.session_state.show = False
+    with col2:
+        if st.button("👁 Показать значение" if not st.session_state.show else "🙈 Скрыть значение"):
+            st.session_state.show = not st.session_state.show
+    with col3:
+        if st.button("✅ Правильно"):
+            st.session_state.answers.append((word['word'], True))
+            st.session_state.stats.setdefault(word['word'], {"right": 0, "wrong": 0})
+            st.session_state.stats[word['word']]["right"] += 1
+            save_stats(st.session_state.stats)
+            st.session_state.index += 1
+            st.session_state.show = False
+
     if st.session_state.index >= len(st.session_state.words):
-        st.title("✅ Результаты")
-        for word, correct in st.session_state.answers:
-            color = "green" if correct else "red"
-            st.markdown(f"<span style='color:{color}'>{word}</span>", unsafe_allow_html=True)
-        if st.button("🔁 Начать заново"):
-            st.session_state.page = "start"
+        st.session_state.page = "result"
+        st.experimental_rerun()
+
+# Результаты
+elif st.session_state.page == "result":
+    st.title("📋 Результаты")
+    for word, correct in st.session_state.answers:
+        if correct:
+            st.success(word)
+        else:
+            st.error(word)
+            full = next((w for w in st.session_state.words if w['word'] == word), None)
+            if full:
+                st.markdown(f"**{full['transcription']}**")
+                st.markdown(f"*{full['part_of_speech']}*")
+                st.markdown("### 🧾 Примеры (Oxford)")
+                st.markdown(full['examples'])
+                st.markdown(full['extra'])
+
+    if st.button("🔁 Начать заново"):
+        st.session_state.page = "start"
+        st.experimental_rerun()
+
+# Показ всего файла
+elif st.session_state.page == "full":
+    st.title("📚 Все слова")
+    all_words = parse_md_file(MD_FILE)
+    for word in sorted(all_words, key=lambda w: w['word']):
+        st.markdown(f"## {word['word']}")
+        st.markdown(f"**{word['transcription']}**")
+        st.markdown(f"*{word['part_of_speech']}*")
+        st.markdown("### 🧾 Примеры (Oxford)")
+        st.markdown(word['examples'])
+        st.markdown(word['extra'])
+        st.markdown("---")
+    if st.button("⬅️ Назад"):
+        st.session_state.page = "start"
+        st.experimental_rerun()
+
+# Статистика
+elif st.session_state.page == "stats":
+    st.title("📊 Статистика по словам")
+    if st.session_state.stats:
+        for word, data in st.session_state.stats.items():
+            st.write(f"**{word}** — ✅ {data['right']} / ❌ {data['wrong']}")
     else:
-        word = st.session_state.words[st.session_state.index]
-        st.markdown(f"### {word['word']}")
-        st.markdown(word["transcription"])
-        st.markdown(word["part_of_speech"])
+        st.info("Статистика пока пуста.")
+    if st.button("⬅️ Назад"):
+        st.session_state.page = "start"
+        st.experimental_rerun()
+"""
 
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col1:
-            if st.button("❌ Неправильно"):
-                st.session_state.answers.append((word['word'], False))
-                if word['word'] not in st.session_state.stats:
-                    st.session_state.stats[word['word']] = {"right": 0, "wrong": 0}
-                st.session_state.stats[word['word']]["wrong"] += 1
-                save_stats(st.session_state.stats)
-                st.session_state.index += 1
-                st.session_state.show = False
+# Сохраняем этот код в файл
+with open("/mnt/data/oxford_quiz_app.py", "w", encoding="utf-8") as f:
+    f.write(quiz_code)
 
-        with col2:
-            if st.button("👁 Показать значение"):
-                st.session_state.show = not st.session_state.show
-
-        with col3:
-            if st.button("✅ Правильно"):
-                st.session_state.answers.append((word['word'], True))
-                if word['word'] not in st.session_state.stats:
-                    st.session_state.stats[word['word']] = {"right": 0, "wrong": 0}
-                st.session_state.stats[word['word']]["right"] += 1
-                save_stats(st.session_state.stats)
-                st.session_state.index += 1
-                st.session_state.show = False
-
-        if st.session_state.show:
-            st.markdown(word["examples"])
-            st.markdown(word["cambridge"])
+"/mnt/data/oxford_quiz_app.py"
