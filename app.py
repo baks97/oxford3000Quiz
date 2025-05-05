@@ -15,6 +15,9 @@ def parse_md_file(filename):
     words = []
     for entry in entries[1:]:
         lines = entry.strip().splitlines()
+        if len(lines) < 3:
+            continue  # пропускаем неполный блок
+
         word = lines[0].strip()
         transcription = lines[1].strip()
         part_of_speech = lines[2].strip()
@@ -30,6 +33,7 @@ def parse_md_file(filename):
             "rest": rest_info,
             "examples": examples
         })
+
     return words
 
 # =================== Загрузка и сохранение статистики =========================
