@@ -113,7 +113,9 @@ elif st.session_state.page == "quiz":
     st.markdown(f"*{word['pos']}*")
     st.markdown(word['examples'])  # всегда показывать 🧾
 
+    # Колонки для кнопок
     col1, col2, col3 = st.columns([1, 1, 1])
+
     with col1:
         if st.button("✅ Правильно"):
             st.session_state.answers.append((word['word'], True))
