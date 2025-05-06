@@ -39,15 +39,20 @@ def main_screen():
     st.title("📚 Учим английские слова")
 
     # Переключатель темы с иконками
-    col1, col2 = st.columns([0.5, 4])
-    with col1:
-        sun_icon = "☀️"  # иконка для светлой темы
-        moon_icon = "🌙"  # иконка для тёмной темы
-        theme_choice = st.selectbox("", ["", sun_icon, moon_icon], key="theme_switch", index=1 if st.session_state.get("dark_mode", False) else 0)
+    theme_icons = {
+        "Светлая": "🌞",
+        "Тёмная": "🌙"
+    }
 
-    if theme_choice == sun_icon:
+    theme_choice = st.selectbox(
+        "Выберите тему", 
+        options=["Светлая", "Тёмная"], 
+        index=0 if not st.session_state.get("dark_mode", False) else 1, 
+        format_func=lambda x: theme_icons[x]
+    )
+    if theme_choice == "Светлая":
         st.session_state["dark_mode"] = False
-    elif theme_choice == moon_icon:
+    else:
         st.session_state["dark_mode"] = True
 
     apply_theme()  # Применяем тему
@@ -140,7 +145,7 @@ def footer():
     <div style="display: flex; align-items: center; gap: 15px; padding: 10px 0;">
         {img_html}
         <div class="footer-text" style="font-style: italic; font-size: 18px;">
-            с любовью для львёнка ❤️
+            С любовью для львёнка ❤️
         </div>
     </div>
     """, unsafe_allow_html=True)
