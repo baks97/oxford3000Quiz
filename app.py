@@ -150,7 +150,7 @@ if st.session_state.page == "main":
     st.markdown(
         """
         <div style='display: flex; align-items: center; justify-content: center;'>
-            <img src='lion.png' width='72' style='text-align: center'>
+            <img src='lion.png' width='72' style='margin-right: 10px;'>
             <p style='font-style: italic;'>с любовью от львёнка ❤️</p>
         </div>
         """, 
