@@ -1,21 +1,8 @@
 import streamlit as st
 import random
-import time
-
-# В начале скрипта
-if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
-    st.session_state.needs_rerun = False
-    st.rerun()
+import re
 
 MD_FILE = "quiz.md"
-
-st.set_page_config(page_title="🧠 Английский квиз", layout="centered")
-
-st.set_page_config(page_title="Английский квиз", layout="wide")
-st.title("🧠 Английский квиз по словам")
-st.markdown("_by Львенок_")
-st.image("lion.png", width=100)
-
 
 st.set_page_config(page_title="🧠 Английский квиз", layout="centered")
 
@@ -27,9 +14,6 @@ def parse_md_file(filename):
     words = []
     for entry in entries:
         lines = entry.strip().splitlines()
-        if len(lines) < 3:
-            continue  # пропустить карточки с отсутствием обязательных строк
-
         word = lines[0].strip()
         transcription = lines[1].strip()
         pos = lines[2].strip()
@@ -77,7 +61,6 @@ def parse_md_file(filename):
 
     return words
 
-
 # Инициализация состояния
 if "page" not in st.session_state:
     st.session_state.page = "start"
@@ -101,7 +84,6 @@ if st.session_state.page == "start":
                 st.session_state.index = 0
                 st.session_state.view_all = False
                 st.session_state.page = "quiz"
-                st.session_state.needs_rerun = True
 
     st.markdown(" ")
     st.write("Или:")
@@ -111,7 +93,7 @@ if st.session_state.page == "start":
         st.session_state.index = 0
         st.session_state.view_all = True
         st.session_state.page = "quiz"
-        st.session_state.needs_rerun = True
+
 elif st.session_state.page == "quiz":
     words = st.session_state.words
     i = st.session_state.index
@@ -136,4 +118,3 @@ elif st.session_state.page == "quiz":
         st.markdown(" ")
         if st.button("🔁 Начать заново"):
             st.session_state.page = "start"
-            st.session_state.needs_rerun = True
