@@ -8,6 +8,9 @@ STATS_FILE = "stats.json"
 
 st.set_page_config(page_title="Английский квиз", layout="wide")
 st.title("🧠 Английский квиз по словам")
+st.markdown("_by Львенок_")
+st.image("lion.png", width=100)
+
 
 def parse_md_file(filename):
     with open(filename, "r", encoding="utf-8") as f:
