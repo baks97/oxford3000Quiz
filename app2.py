@@ -17,6 +17,41 @@ def apply_theme():
                 body, .stApp { background-color: #121212; color: #f1f1f1; }
                 .word-card { background-color: #1e1e1e; color: #f1f1f1; }
                 .footer-text { color: #ffcccc; }
+                .toggle-btn {
+                    position: relative;
+                    display: inline-block;
+                    width: 60px;
+                    height: 34px;
+                }
+                .toggle-btn input { opacity: 0; width: 0; height: 0; }
+                .slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #ccc;
+                    transition: .4s;
+                    border-radius: 34px;
+                }
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 26px;
+                    width: 26px;
+                    border-radius: 50%;
+                    left: 4px;
+                    bottom: 4px;
+                    background-color: white;
+                    transition: .4s;
+                }
+                input:checked + .slider {
+                    background-color: #4CAF50;
+                }
+                input:checked + .slider:before {
+                    transform: translateX(26px);
+                }
             </style>
         """, unsafe_allow_html=True)
     else:
@@ -26,6 +61,41 @@ def apply_theme():
                 body, .stApp { background-color: #f5e0c3; color: black; }
                 .word-card { background-color: #ffffff; color: black; }
                 .footer-text { color: #e63946; }
+                .toggle-btn {
+                    position: relative;
+                    display: inline-block;
+                    width: 60px;
+                    height: 34px;
+                }
+                .toggle-btn input { opacity: 0; width: 0; height: 0; }
+                .slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #ccc;
+                    transition: .4s;
+                    border-radius: 34px;
+                }
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 26px;
+                    width: 26px;
+                    border-radius: 50%;
+                    left: 4px;
+                    bottom: 4px;
+                    background-color: white;
+                    transition: .4s;
+                }
+                input:checked + .slider {
+                    background-color: #4CAF50;
+                }
+                input:checked + .slider:before {
+                    transform: translateX(26px);
+                }
             </style>
         """, unsafe_allow_html=True)
 
@@ -38,22 +108,14 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Переключатель темы с иконками
-    theme_icons = {
-        "Светлая": "🌞",
-        "Тёмная": "🌙"
-    }
+    # Переключатель темы
+    st.markdown("<h3>Выберите тему</h3>", unsafe_allow_html=True)
 
-    theme_choice = st.selectbox(
-        "Выберите тему", 
-        options=["Светлая", "Тёмная"], 
-        index=0 if not st.session_state.get("dark_mode", False) else 1, 
-        format_func=lambda x: theme_icons[x]
-    )
-    if theme_choice == "Светлая":
-        st.session_state["dark_mode"] = False
-    else:
+    toggle = st.checkbox("🌙", key="toggle_dark_mode", value=st.session_state.get("dark_mode", False))
+    if toggle:
         st.session_state["dark_mode"] = True
+    else:
+        st.session_state["dark_mode"] = False
 
     apply_theme()  # Применяем тему
 
