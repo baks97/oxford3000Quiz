@@ -44,7 +44,7 @@ def parse_md_file(filename):
         })
     return words
 
-# Инициализация состояния
+# Сессия
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
     st.session_state.words = []
@@ -59,29 +59,31 @@ words_all = parse_md_file("quiz.md")
 
 # Главный экран
 if st.session_state.page == 'main':
-    st.write("Выберите режим:")
+    st.markdown("<h3 style='text-align: center;'>Выберите режим:</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📚 Учить слова"):
+        if st.button("📚 Учить слова", use_container_width=True):
             st.session_state.words = random.sample(words_all, 50)
             st.session_state.page = "learn"
             st.session_state.index = 0
     with col2:
-        if st.button("📝 Пройти тест"):
+        if st.button("📝 Пройти тест", use_container_width=True):
             st.session_state.page = "select_test"
 
-# Выбор количества слов
+# Выбор слов
 elif st.session_state.page == "select_test":
-    st.write("Выберите количество слов для теста:")
-    for count in [7, 15, 20, 25]:
-        if st.button(f"{count} слов"):
-            st.session_state.words = random.sample(words_all, count)
-            st.session_state.index = 0
-            st.session_state.stats = {}
-            st.session_state.page = "test"
-            st.session_state.show_card = False
+    st.markdown("<h4 style='text-align: center;'>Выберите количество слов для теста:</h4>", unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
+    for count, col in zip([7, 15, 20, 25], [col1, col2, col3, col4]):
+        with col:
+            if st.button(f"{count} слов", use_container_width=True):
+                st.session_state.words = random.sample(words_all, count)
+                st.session_state.index = 0
+                st.session_state.stats = {}
+                st.session_state.page = "test"
+                st.session_state.show_card = False
 
-# Режим "Учить слова"
+# Учить слова
 elif st.session_state.page == "learn":
     word = st.session_state.words[st.session_state.index]
     st.markdown(f"### {word['word']}")
@@ -90,30 +92,31 @@ elif st.session_state.page == "learn":
     st.markdown(f"{word['examples']}")
     st.markdown(f"{word['cambridge']}")
     st.markdown(f"{word['rest']}")
-    
-    col1, col2, col3 = st.columns(3)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col1:
         if st.button("◀️ Назад") and st.session_state.index > 0:
             st.session_state.index -= 1
     with col2:
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
         st.button("🏠 Главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
+        st.markdown("</div>", unsafe_allow_html=True)
     with col3:
         if st.button("▶️ Далее") and st.session_state.index < len(st.session_state.words) - 1:
             st.session_state.index += 1
 
-# Режим "Тест"
+# Тест
 elif st.session_state.page == "test":
     if st.session_state.index >= len(st.session_state.words):
-        st.write("✅ Тест завершён!")
-        correct = sum(1 for res in st.session_state.stats.values() if res == True)
-        incorrect = sum(1 for res in st.session_state.stats.values() if res == False)
+        st.success("✅ Тест завершён!")
+        correct = sum(1 for res in st.session_state.stats.values() if res)
+        incorrect = sum(1 for res in st.session_state.stats.values() if not res)
         st.write(f"**Правильно:** {correct}")
         st.write(f"**Неправильно:** {incorrect}")
         st.write("Ответы:")
         for word, result in st.session_state.stats.items():
             st.write(f"{word}: {'✅' if result else '❌'}")
-        if st.button("🏠 На главный экран"):
-            st.session_state.page = "main"
+        st.button("🏠 На главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
     else:
         word = st.session_state.words[st.session_state.index]
         st.markdown(f"### {word['word']}")
@@ -139,5 +142,8 @@ elif st.session_state.page == "test":
                 st.session_state.stats[word['word']] = False
                 st.session_state.index += 1
                 st.session_state.show_card = False
-
         st.button("🏠 Главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
+
+# Надпись внизу
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
