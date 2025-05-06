@@ -97,9 +97,10 @@ def main_screen():
         </label>
     """, unsafe_allow_html=True)
 
-    # Переключение темы
-    if st.checkbox(" ", key="theme_switch", on_change=lambda: toggle_theme(), value=st.session_state.get("dark_mode", False)):
+    # Обработчик события для переключения темы
+    if st.checkbox("Переключить тему", key="theme_switch", value=st.session_state.get("dark_mode", False)):
         st.session_state["dark_mode"] = not st.session_state["dark_mode"]
+        st.experimental_rerun()  # Перезапуск страницы, чтобы применить новую тему
 
     # Применяем тему
     apply_theme()
