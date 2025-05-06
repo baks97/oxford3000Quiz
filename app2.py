@@ -37,15 +37,13 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    if "rerun_theme" not in st.session_state:
-    st.session_state["rerun_theme"] = False
-
+    # Переключатель темы
     new_theme = st.toggle("🌙 Темная тема", key="dark_mode")
     if new_theme != st.session_state.get("current_theme", None):
-       st.session_state["current_theme"] = new_theme
-       st.session_state["rerun_theme"] = True
+        st.session_state["current_theme"] = new_theme
+        st.session_state["rerun_theme"] = True
 
-
+    # Выбор количества слов
     st.markdown("### Сколько слов учить?")
     word_count = st.radio("Выберите:", [20, 30, 50], horizontal=True, key="word_count_choice")
 
@@ -101,6 +99,7 @@ def study_screen():
 def footer():
     st.markdown("---", unsafe_allow_html=True)
 
+    # Чтение и отображение изображения львёнка
     image_path = "lion.png"
     if Path(image_path).exists():
         with open(image_path, "rb") as f:
@@ -122,9 +121,9 @@ def footer():
 # --- Инициализация ---
 def initialize():
     if "words" not in st.session_state:
-        md_path = Path("quiz.md")
+        md_path = Path("quiz.md")  # Поменяли на новый файл quiz.md
         if not md_path.exists():
-            st.error("Файл words.md не найден.")
+            st.error("Файл quiz.md не найден.")
             return
         with open(md_path, encoding="utf-8") as f:
             content = f.read()
@@ -137,19 +136,24 @@ def initialize():
         st.session_state["dark_mode"] = False
     if "word_count_choice" not in st.session_state:
         st.session_state["word_count_choice"] = 50
+    if "rerun_theme" not in st.session_state:
+        st.session_state["rerun_theme"] = False
 
 # --- Основной запуск ---
 def main():
     initialize()
     apply_theme()
+
+    # Перезапуск после изменения темы
+    if st.session_state.get("rerun_theme", False):
+        st.session_state["rerun_theme"] = False
+        st.rerun()
+
     if st.session_state["screen"] == "main":
         main_screen()
     elif st.session_state["screen"] == "study":
         study_screen()
-    if st.session_state.get("rerun_theme", False):
-       st.session_state["rerun_theme"] = False
-       st.rerun()
- 
+
     footer()
 
 if __name__ == "__main__":
