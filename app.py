@@ -145,20 +145,18 @@ elif st.session_state.page == "test":
         st.button("🏠 Главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
         
 import streamlit as st
-
-# На главном экране картинка и надпись в одном ряду
+# Надпись и изображение внизу главного экрана
 if st.session_state.page == "main":
-    # Если изображение в вашем проекте находится в папке assets, используем относительный путь:
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown(
         """
-        <div style='display: flex; justify-content: center; align-items: center;'>
-            <img src='lion.png' width='72' style='margin-right: 10px;'>
-            <p style='font-style: italic; text-align: center;'>с любовью от львёнка ❤️</p>
+        <div style="display: flex; justify-content: center;">
+            <img src="lion.png" width="10" />
         </div>
-        """, 
+        """,
         unsafe_allow_html=True
     )
+    st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
 else:
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
