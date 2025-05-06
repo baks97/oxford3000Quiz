@@ -38,9 +38,15 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Переключатель темы
-    new_theme = st.radio("🌙 Выберите тему", ["Светлая", "Тёмная"], index=1 if st.session_state.get("dark_mode", False) else 0)
-    if new_theme == "Светлая":
+    # Ползунок для выбора темы
+    theme_value = st.slider(
+        "🌙 Выберите тему",
+        0, 1, 1 if st.session_state.get("dark_mode", False) else 0,
+        step=1, format="Тема: %d"
+    )
+
+    # Обновляем состояние темы
+    if theme_value == 0:
         st.session_state["dark_mode"] = False
     else:
         st.session_state["dark_mode"] = True
