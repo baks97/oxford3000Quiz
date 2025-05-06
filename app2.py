@@ -2,35 +2,31 @@ import streamlit as st
 import random
 import re
 from pathlib import Path
+import base64
 
 # --- Настройки страницы ---
 st.set_page_config(page_title="Учить слова", page_icon="📚", layout="centered")
 
-# --- Стилизация фона и кнопок ---
-st.markdown("""
-    <style>
-        body {
-            background-color: #fdf6f0;
-        }
-        .stApp {
-            background-color: #fdf6f0;
-        }
-        .main-button {
-            display: inline-block;
-            background: #ffb703;
-            color: white;
-            font-weight: bold;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 22px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .main-button:hover {
-            background: #fb8500;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# --- Темы ---
+def apply_theme():
+    if st.session_state.get("dark_mode", False):
+        # Тёмная тема
+        st.markdown("""
+            <style>
+                body, .stApp { background-color: #121212; color: #f1f1f1; }
+                .word-card { background-color: #1e1e1e; color: #f1f1f1; }
+                .footer-text { color: #ffcccc; }
+            </style>
+        """, unsafe_allow_html=True)
+    else:
+        # Светлая тема
+        st.markdown("""
+            <style>
+                body, .stApp { background-color: #fdf6f0; color: black; }
+                .word-card { background-color: #ffffff; color: black; }
+                .footer-text { color: #e63946; }
+            </style>
+        """, unsafe_allow_html=True)
 
 # --- Парсинг слов ---
 def parse_words(md_text):
@@ -41,13 +37,16 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    st.markdown("<div style='text-align: center; padding: 50px;'>", unsafe_allow_html=True)
+    st.toggle("🌙 Темная тема", key="dark_mode", on_change=st.rerun)
+
+    st.markdown("### Сколько слов учить?")
+    word_count = st.radio("Выберите:", [20, 30, 50], horizontal=True, key="word_count_choice")
+
     if st.button("🚀 Начать учить слова", use_container_width=True):
         st.session_state["screen"] = "study"
         st.session_state["current_index"] = 0
-        st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=50)
+        st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=word_count)
         st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Экран изучения слов ---
 def study_screen():
@@ -58,19 +57,18 @@ def study_screen():
         word_md = "## 🔤 " + words[index]
 
         st.markdown(f"""
-            <div style="
-                background-color: #ffffff;
+            <div class="word-card" style="
                 padding: 25px;
                 border-radius: 16px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                 margin-bottom: 20px;
             ">
                 {word_md}
             </div>
         """, unsafe_allow_html=True)
 
-        st.progress((index + 1) / 50)
-        st.caption(f"Слово {index + 1} из 50")
+        st.progress((index + 1) / len(words))
+        st.caption(f"Слово {index + 1} из {len(words)}")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -82,7 +80,7 @@ def study_screen():
                 st.session_state["screen"] = "main"
                 st.rerun()
     else:
-        st.subheader("🎉 Вы выучили все 50 слов!")
+        st.subheader("🎉 Вы выучили все слова!")
         st.markdown("### Вот они:")
         for entry in words:
             match = re.match(r"(.*?)\n", entry)
@@ -92,20 +90,29 @@ def study_screen():
             st.session_state["screen"] = "main"
             st.rerun()
 
-# --- Нижняя плашка ---
+# --- Нижняя плашка с изображением ---
 def footer():
     st.markdown("---", unsafe_allow_html=True)
-    footer_html = """
+
+    image_path = "lion.png"
+    if Path(image_path).exists():
+        with open(image_path, "rb") as f:
+            img_bytes = f.read()
+        encoded = base64.b64encode(img_bytes).decode()
+        img_html = f'<img src="data:image/png;base64,{encoded}" width="60" style="border-radius:12px;" />'
+    else:
+        img_html = ""
+
+    st.markdown(f"""
     <div style="display: flex; align-items: center; gap: 15px; padding: 10px 0;">
-        <img src="lion.png" alt="lion" width="60" style="border-radius: 12px;" />
-        <div style="font-style: italic; font-size: 18px; color: #e63946;">
+        {img_html}
+        <div class="footer-text" style="font-style: italic; font-size: 18px;">
             С любовью для львёнка ❤️
         </div>
     </div>
-    """
-    st.markdown(footer_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# --- Инициализация данных ---
+# --- Инициализация ---
 def initialize():
     if "words" not in st.session_state:
         md_path = Path("words.md")
@@ -119,10 +126,15 @@ def initialize():
         st.session_state["screen"] = "main"
     if "current_index" not in st.session_state:
         st.session_state["current_index"] = 0
+    if "dark_mode" not in st.session_state:
+        st.session_state["dark_mode"] = False
+    if "word_count_choice" not in st.session_state:
+        st.session_state["word_count_choice"] = 50
 
 # --- Основной запуск ---
 def main():
     initialize()
+    apply_theme()
     if st.session_state["screen"] == "main":
         main_screen()
     elif st.session_state["screen"] == "study":
