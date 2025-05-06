@@ -9,6 +9,7 @@ st.set_page_config(page_title="Учить слова", page_icon="📚", layout=
 
 # --- Темы ---
 def apply_theme():
+    # Устанавливаем тему один раз, когда она меняется
     if st.session_state.get("dark_mode", False):
         # Тёмная тема
         st.markdown("""
@@ -38,10 +39,13 @@ def main_screen():
     st.title("📚 Учим английские слова")
 
     # Переключатель темы
-    new_theme = st.toggle("🌙 Темная тема", key="dark_mode")
-    if new_theme != st.session_state.get("current_theme", None):
-        st.session_state["current_theme"] = new_theme
-        st.session_state["rerun_theme"] = True
+    new_theme = st.radio("🌙 Выберите тему", ["Светлая", "Тёмная"], index=1 if st.session_state.get("dark_mode", False) else 0)
+    if new_theme == "Светлая":
+        st.session_state["dark_mode"] = False
+    else:
+        st.session_state["dark_mode"] = True
+
+    apply_theme()  # Применяем тему
 
     # Выбор количества слов
     st.markdown("### Сколько слов учить?")
@@ -160,12 +164,9 @@ def initialize():
 # --- Основной запуск ---
 def main():
     initialize()
-    apply_theme()
 
-    # Перезапуск после изменения темы
-    if st.session_state.get("rerun_theme", False):
-        st.session_state["rerun_theme"] = False
-        st.rerun()
+    # Применяем тему в начале
+    apply_theme()
 
     if st.session_state["screen"] == "main":
         main_screen()
