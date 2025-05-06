@@ -144,12 +144,12 @@ elif st.session_state.page == "test":
                 st.session_state.show_card = False
         st.button("🏠 Главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
         
-# Только на главном экране показываем изображение
+# Надпись и изображение внизу главного экрана
 if st.session_state.page == "main":
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.image("lion.png", width=100)  # Укажи нужный размер или убери width
-    )
-
+    st.image("lion.png", use_column_width=True, caption="", output_format="auto")
+    st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
+else:
 # Надпись внизу
-st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
