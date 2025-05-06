@@ -9,7 +9,7 @@ if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
 
 MD_FILE = "quiz.md"
 
-st.set_page_config(page_title="🧠 Английский квиз", layout="centered")
+st.set_page_config(page_title="🧠 Английский квиз by львенок", layout="centered")
 
 def parse_md_file(filename):
     with open(filename, encoding="utf-8") as f:
