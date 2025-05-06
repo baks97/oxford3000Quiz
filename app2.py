@@ -37,7 +37,14 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    st.toggle("🌙 Темная тема", key="dark_mode", on_change=st.rerun)
+    if "rerun_theme" not in st.session_state:
+    st.session_state["rerun_theme"] = False
+
+new_theme = st.toggle("🌙 Темная тема", key="dark_mode")
+if new_theme != st.session_state.get("current_theme", None):
+    st.session_state["current_theme"] = new_theme
+    st.session_state["rerun_theme"] = True
+
 
     st.markdown("### Сколько слов учить?")
     word_count = st.radio("Выберите:", [20, 30, 50], horizontal=True, key="word_count_choice")
@@ -139,6 +146,10 @@ def main():
         main_screen()
     elif st.session_state["screen"] == "study":
         study_screen()
+    if st.session_state.get("rerun_theme", False):
+       st.session_state["rerun_theme"] = False
+       st.rerun()
+ 
     footer()
 
 if __name__ == "__main__":
