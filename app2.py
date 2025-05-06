@@ -17,39 +17,10 @@ def apply_theme():
                 body, .stApp { background-color: #121212; color: #f1f1f1; }
                 .word-card { background-color: #1e1e1e; color: #f1f1f1; }
                 .footer-text { color: #ffcccc; }
-                .toggle-btn {
-                    position: relative;
-                    display: inline-block;
-                    width: 60px;
-                    height: 34px;
+                .toggle-container input:checked + .slider {
+                    background-color: #2a2a2a;
                 }
-                .toggle-btn input { opacity: 0; width: 0; height: 0; }
-                .slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #ccc;
-                    transition: .4s;
-                    border-radius: 34px;
-                }
-                .slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 26px;
-                    width: 26px;
-                    border-radius: 50%;
-                    left: 4px;
-                    bottom: 4px;
-                    background-color: white;
-                    transition: .4s;
-                }
-                input:checked + .slider {
-                    background-color: #4CAF50;
-                }
-                input:checked + .slider:before {
+                .toggle-container input:checked + .slider:before {
                     transform: translateX(26px);
                 }
             </style>
@@ -61,39 +32,10 @@ def apply_theme():
                 body, .stApp { background-color: #f5e0c3; color: black; }
                 .word-card { background-color: #ffffff; color: black; }
                 .footer-text { color: #e63946; }
-                .toggle-btn {
-                    position: relative;
-                    display: inline-block;
-                    width: 60px;
-                    height: 34px;
+                .toggle-container input:checked + .slider {
+                    background-color: #e63946;
                 }
-                .toggle-btn input { opacity: 0; width: 0; height: 0; }
-                .slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #ccc;
-                    transition: .4s;
-                    border-radius: 34px;
-                }
-                .slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 26px;
-                    width: 26px;
-                    border-radius: 50%;
-                    left: 4px;
-                    bottom: 4px;
-                    background-color: white;
-                    transition: .4s;
-                }
-                input:checked + .slider {
-                    background-color: #4CAF50;
-                }
-                input:checked + .slider:before {
+                .toggle-container input:checked + .slider:before {
                     transform: translateX(26px);
                 }
             </style>
@@ -108,14 +50,22 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Переключатель темы
-    st.markdown("<h3>Выберите тему</h3>", unsafe_allow_html=True)
+    # Переключатель темы с ползунком (🌙-☀️)
+    theme_toggler = st.markdown("""
+    <label class="toggle-container">
+        <input type="checkbox" id="theme_toggle" onchange="window.location.reload();" 
+               style="display:none;" {0}>
+        <span class="slider round"></span>
+        <span style="margin-left: 10px; font-size: 24px;">🌙</span><span style="margin-left: 5px; font-size: 24px;">☀️</span>
+    </label>
+    """.format('checked' if st.session_state.get("dark_mode", False) else ''), unsafe_allow_html=True)
 
-    toggle = st.checkbox("🌙", key="toggle_dark_mode", value=st.session_state.get("dark_mode", False))
-    if toggle:
-        st.session_state["dark_mode"] = True
+    # Обработка изменения темы
+    if 'theme_toggler' in st.session_state:
+        theme_toggler = st.session_state['theme_toggler']
     else:
-        st.session_state["dark_mode"] = False
+        theme_toggler = False
+    st.session_state['dark_mode'] = theme_toggler
 
     apply_theme()  # Применяем тему
 
