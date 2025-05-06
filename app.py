@@ -1,11 +1,8 @@
 import streamlit as st
 import random
-import re
+import time
 
-MD_FILE = "quiz.md"
-
-st.set_page_config(page_title="🧠 Английский квиз", layout="centered")
-
+# Чтение данных
 def parse_md_file(filename):
     with open(filename, encoding="utf-8") as f:
         content = f.read()
@@ -64,61 +61,118 @@ def parse_md_file(filename):
 
     return words
 
-
 # Инициализация состояния
-if "page" not in st.session_state:
-    st.session_state.page = "start"
-if "words" not in st.session_state:
+if 'page' not in st.session_state:
+    st.session_state.page = 'main'
     st.session_state.words = []
-if "index" not in st.session_state:
     st.session_state.index = 0
-if "view_all" not in st.session_state:
+    st.session_state.stats = {}
+    st.session_state.test_mode = False
     st.session_state.view_all = False
 
+# Заголовок
 st.title("🧠 Английский квиз по словам")
 
-if st.session_state.page == "start":
-    st.subheader("Выберите количество слов:")
+# Чтение файла
+MD_FILE = "quiz.md"
+words_all = parse_md_file(MD_FILE)
 
-    col1, col2, col3, col4 = st.columns(4)
-    for count, col in zip([7, 15, 20, 25], [col1, col2, col3, col4]):
-        with col:
-            if st.button(f"{count} слов"):
-                st.session_state.words = random.sample(parse_md_file(MD_FILE), k=count)
-                st.session_state.index = 0
-                st.session_state.view_all = False
-                st.session_state.page = "quiz"
+# Главный экран
+if st.session_state.page == 'main':
+    st.write("Выберите режим:")
 
-    st.markdown(" ")
-    st.write("Или:")
-    if st.button("📂 Показать весь файл"):
-        all_words = parse_md_file(MD_FILE)
-        st.session_state.words = random.sample(all_words, k=len(all_words))
+    # Выбор режима
+    mode = st.selectbox("Выберите режим", ["Учить слова", "Проверка слов"])
+
+    if mode == "Учить слова":
+        st.session_state.words = random.sample(words_all, len(words_all))  # случайный порядок всех слов
+        st.session_state.test_mode = False
+        st.session_state.page = 'quiz'
+    elif mode == "Проверка слов":
+        st.session_state.test_mode = True
+        st.session_state.page = 'test'
+
+    st.write("Выберите количество слов для теста:")
+
+    # Выбор количества слов для теста
+    if st.button("7 слов"):
+        st.session_state.words = random.sample(words_all, 7)
         st.session_state.index = 0
+        st.session_state.page = "test"
+    elif st.button("15 слов"):
+        st.session_state.words = random.sample(words_all, 15)
+        st.session_state.index = 0
+        st.session_state.page = "test"
+    elif st.button("20 слов"):
+        st.session_state.words = random.sample(words_all, 20)
+        st.session_state.index = 0
+        st.session_state.page = "test"
+    elif st.button("25 слов"):
+        st.session_state.words = random.sample(words_all, 25)
+        st.session_state.index = 0
+        st.session_state.page = "test"
+
+    # Кнопка для отображения всего файла
+    if st.button("📂 Показать весь файл"):
+        st.session_state.page = "all_words"
         st.session_state.view_all = True
-        st.session_state.page = "quiz"
 
-elif st.session_state.page == "quiz":
-    words = st.session_state.words
-    i = st.session_state.index
+# Тестирование слов
+elif st.session_state.page == 'test':
+    word = st.session_state.words[st.session_state.index]
 
-    word = words[i]
-    st.markdown(f"### {word['word']}")
-    st.markdown(word['transcription'])
-    st.markdown(f"*{word['pos']}*")
-    st.markdown(word['examples'])
-    st.markdown(word['rest'])
-    st.markdown(word['cambridge'])
+    # Отображение текущего слова
+    st.write(f"### {word['word']}")
+    st.write(f"**Транскрипция:** {word['transcription']}")
+    st.write(f"**Часть речи:** {word['pos']}")
 
-    col1, col2 = st.columns([1, 1])
+    # Кнопка для отображения карточки
+    if st.button("Показать карточку"):
+        st.write(f"**Примеры:** {word['examples']}")
+        st.write(f"**Перевод (Cambridge):** {word['cambridge']}")
+        st.write(f"**Остальная информация:** {word['rest']}")
+
+    # Кнопки для правильных и неправильных ответов
+    col1, col2 = st.columns(2)
     with col1:
-        if st.button("⬅ Предыдущее") and i > 0:
-            st.session_state.index -= 1
+        if st.button("✅ Правильно"):
+            st.session_state.stats[word['word']] = {"right": 1, "wrong": 0}
+            st.session_state.index += 1
     with col2:
-        if st.button("➡ Следующее") and i < len(words) - 1:
+        if st.button("❌ Неправильно"):
+            st.session_state.stats[word['word']] = {"right": 0, "wrong": 1}
             st.session_state.index += 1
 
-    if st.session_state.view_all and st.session_state.index == len(words) - 1:
-        st.markdown(" ")
-        if st.button("🔁 Начать заново"):
-            st.session_state.page = "start"
+    # Кнопки для переключения слов
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("◀️ Предыдущее"):
+            st.session_state.index -= 1
+    with col2:
+        if st.button("🏠 Главный экран"):
+            st.session_state.page = "main"
+    with col3:
+        if st.button("▶️ Следующее"):
+            st.session_state.index += 1
+
+    # Окончание теста
+    if st.session_state.index >= len(st.session_state.words):
+        st.write(f"Тест завершен! Результат:")
+        correct = sum([1 for stat in st.session_state.stats.values() if stat["right"] == 1])
+        wrong = sum([1 for stat in st.session_state.stats.values() if stat["wrong"] == 1])
+        st.write(f"Правильных ответов: {correct}")
+        st.write(f"Неправильных ответов: {wrong}")
+        st.write("Ваши ответы:")
+        for word, stat in st.session_state.stats.items():
+            st.write(f"{word}: {'Правильно' if stat['right'] == 1 else 'Неправильно'}")
+
+# Просмотр всего файла
+elif st.session_state.page == 'all_words':
+    st.write("Все слова:")
+    for word in sorted(words_all, key=lambda x: x['word']):
+        st.write(f"### {word['word']}")
+        st.write(f"**Транскрипция:** {word['transcription']}")
+        st.write(f"**Часть речи:** {word['pos']}")
+        st.write(f"**Примеры:** {word['examples']}")
+        st.write(f"**Перевод (Cambridge):** {word['cambridge']}")
+        st.write(f"**Остальная информация:** {word['rest']}")
