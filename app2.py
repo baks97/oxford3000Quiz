@@ -69,7 +69,7 @@ def toggle_theme():
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Переключатель пользователей
+    # Переключение пользователей
     user_icon = "🦁" if st.session_state["current_user"] == "lion" else "🦈"
     if st.button(f"Переключить пользователя: {user_icon}"):
         st.session_state["current_user"] = "lion" if st.session_state["current_user"] == "shark" else "shark"
@@ -79,6 +79,9 @@ def main_screen():
         st.session_state["viewed_words"] = []
         st.session_state["rerun_theme"] = False
         st.rerun()
+
+    # Иконка текущего пользователя
+    st.markdown(f"### Текущий пользователь: {user_icon}")
 
     # Кнопка для переключения темы
     theme_icon = "☀️" if st.session_state["dark_mode"] else "🌙"
