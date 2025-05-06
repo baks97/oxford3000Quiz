@@ -143,6 +143,12 @@ elif st.session_state.page == "test":
                 st.session_state.index += 1
                 st.session_state.show_card = False
         st.button("🏠 Главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
+        
+# Только на главном экране показываем изображение
+if st.session_state.page == "main":
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.image("lion.png", width=120)  # Укажи нужный размер или убери width
+    )
 
 # Надпись внизу
 st.markdown("<hr>", unsafe_allow_html=True)
