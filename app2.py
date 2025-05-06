@@ -115,7 +115,7 @@ def footer():
 # --- Инициализация ---
 def initialize():
     if "words" not in st.session_state:
-        md_path = Path("words.md")
+        md_path = Path("quiz.md")
         if not md_path.exists():
             st.error("Файл words.md не найден.")
             return
