@@ -148,14 +148,7 @@ import streamlit as st
 # Надпись и изображение внизу главного экрана
 if st.session_state.page == "main":
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div style="display: flex; justify-content: center;">
-            <img src="lion.png" width="50" />
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.image("lion.png", use_container_width=False, width=50, caption="", output_format="auto")
     st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
 else:
     st.markdown("<hr>", unsafe_allow_html=True)
