@@ -1,177 +1,167 @@
 import streamlit as st
 import random
-import re
-from pathlib import Path
-import base64
+import json
+import os
 
-# --- Настройки страницы ---
-st.set_page_config(page_title="Учить слова", page_icon="📚", layout="centered")
-
-# --- Темы ---
+# ---------- Настройки темы ----------
 def apply_theme():
-    # Устанавливаем тему один раз, когда она меняется
     if st.session_state.get("dark_mode", False):
-        # Тёмная тема
-        st.markdown("""
+        st.markdown(\"""
             <style>
-                body, .stApp { background-color: #121212; color: #f1f1f1; }
-                .word-card { background-color: #1e1e1e; color: #f1f1f1; }
-                .footer-text { color: #ffcccc; }
-                .stCheckbox > label { color: #fff; }
+                body, .main, .block-container {
+                    background-color: #1E1E1E;
+                    color: #FFFFFF;
+                }
+                .stButton button {
+                    background-color: #333;
+                    color: white;
+                }
             </style>
-        """, unsafe_allow_html=True)
+        \""", unsafe_allow_html=True)
     else:
-        # Светлая тема (цвет топленого молока)
-        st.markdown("""
+        st.markdown(\"""
             <style>
-                body, .stApp { background-color: #f5e0c3; color: black; }
-                .word-card { background-color: #ffffff; color: black; }
-                .footer-text { color: #e63946; }
-                .stCheckbox > label { color: black; }
+                body, .main, .block-container {
+                    background-color: #FDF6EC;
+                    color: #000000;
+                }
             </style>
-        """, unsafe_allow_html=True)
+        \""", unsafe_allow_html=True)
 
-# --- Парсинг слов ---
-def parse_words(md_text):
-    entries = md_text.split("## 🔤 ")
-    return [entry.strip() for entry in entries if entry.strip()]
+# ---------- Загрузка данных ----------
+def load_words():
+    with open("quiz.md", "r", encoding="utf-8") as f:
+        content = f.read()
+    entries = content.split("## 🔤 ")[1:]
+    return [entry.strip() for entry in entries]
 
-# --- Главный экран ---
+def save_user_data():
+    data = {}
+    if os.path.exists("user_data.json"):
+        with open("user_data.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+    user = st.session_state.get("current_user", "lion")
+    if user not in data:
+        data[user] = {"hard_words": [], "viewed_words": []}
+
+    current_word = st.session_state["shuffled_words"][st.session_state["current_index"]]
+    if current_word not in data[user]["viewed_words"]:
+        data[user]["viewed_words"].append(current_word)
+
+    with open("user_data.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def mark_word_as_hard():
+    data = {}
+    if os.path.exists("user_data.json"):
+        with open("user_data.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+    user = st.session_state.get("current_user", "lion")
+    if user not in data:
+        data[user] = {"hard_words": [], "viewed_words": []}
+
+    current_word = st.session_state["shuffled_words"][st.session_state["current_index"]]
+    if current_word not in data[user]["hard_words"]:
+        data[user]["hard_words"].append(current_word)
+
+    with open("user_data.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+# ---------- Инициализация ----------
+if "words" not in st.session_state:
+    st.session_state["words"] = load_words()
+
+if "screen" not in st.session_state:
+    st.session_state["screen"] = "main"
+
+if "dark_mode" not in st.session_state:
+    st.session_state["dark_mode"] = False
+
+if "current_user" not in st.session_state:
+    st.session_state["current_user"] = "lion"
+
+apply_theme()
+
+# ---------- Главный экран ----------
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Кнопка переключения темы
-    if st.button("🌙 Переключить тему" if not st.session_state.get("dark_mode", False) else "☀️ Переключить тему"):
-        st.session_state["dark_mode"] = not st.session_state["dark_mode"]
-        st.rerun()
+    col_user, col_theme = st.columns([1, 1])
 
-    # Выбор количества слов
+    with col_user:
+        if st.button("🦁" if st.session_state["current_user"] == "lion" else "🦈"):
+            st.session_state["current_user"] = "shark" if st.session_state["current_user"] == "lion" else "lion"
+            st.rerun()
+
+    with col_theme:
+        if st.button("🌙" if not st.session_state["dark_mode"] else "☀️"):
+            st.session_state["dark_mode"] = not st.session_state["dark_mode"]
+            st.rerun()
+
     st.markdown("### Сколько слов учить?")
     col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("20 слов", use_container_width=True):
-            st.session_state["word_count_choice"] = 20
-            st.session_state["screen"] = "study"
-            st.session_state["current_index"] = 0
-            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=20)
-            st.session_state["rerun_theme"] = False
-            st.rerun()
-    with col2:
-        if st.button("30 слов", use_container_width=True):
-            st.session_state["word_count_choice"] = 30
-            st.session_state["screen"] = "study"
-            st.session_state["current_index"] = 0
-            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=30)
-            st.session_state["rerun_theme"] = False
-            st.rerun()
-    with col3:
-        if st.button("50 слов", use_container_width=True):
-            st.session_state["word_count_choice"] = 50
-            st.session_state["screen"] = "study"
-            st.session_state["current_index"] = 0
-            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=50)
-            st.session_state["rerun_theme"] = False
-            st.rerun()
+    for count, col in zip([20, 30, 50], [col1, col2, col3]):
+        with col:
+            if st.button(f"{count} слов", use_container_width=True):
+                st.session_state["word_count_choice"] = count
+                st.session_state["screen"] = "study"
+                st.session_state["current_index"] = 0
+                st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=count)
+                st.rerun()
 
-# --- Экран изучения слов ---
+# ---------- Экран изучения ----------
 def study_screen():
-    index = st.session_state["current_index"]
+    idx = st.session_state["current_index"]
     words = st.session_state["shuffled_words"]
 
-    if index < len(words):
-        word_md = "## 🔤 " + words[index]
+    st.markdown(f"### 👤 Пользователь: {'🦁' if st.session_state['current_user'] == 'lion' else '🦈'}")
 
-        st.markdown(f"""
-            <div class="word-card" style="
-                padding: 25px;
-                border-radius: 16px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                margin-bottom: 20px;
-            ">
-                {word_md}
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown(f"#### Слово {idx + 1} из {len(words)}")
+    st.markdown(f"---\\n{words[idx]}\\n---", unsafe_allow_html=True)
 
-        st.progress((index + 1) / len(words))
-        st.caption(f"Слово {index + 1} из {len(words)}")
+    save_user_data()
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➡️ Вперёд", use_container_width=True):
-                st.session_state["current_index"] += 1
-                st.rerun()
-        with col2:
-            if st.button("🏠 На главный экран", use_container_width=True):
-                st.session_state["screen"] = "main"
-                st.rerun()
-    else:
-        st.subheader("🎉 Вы выучили все слова!")
-        st.markdown("### Вот они:")
-        for entry in words:
-            match = re.match(r"(.*?)\n", entry)
-            word = match.group(1).strip() if match else "Не найдено"
-            st.markdown(f"- **{word}**")
-        if st.button("🔁 Начать заново"):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("↩️ На главный экран"):
             st.session_state["screen"] = "main"
             st.rerun()
+    with col2:
+        if st.button("🤔 Я не знаю"):
+            mark_word_as_hard()
+            st.success("Добавлено в список трудных слов")
+    with col3:
+        if st.button("➡️ Вперед"):
+            if idx + 1 < len(words):
+                st.session_state["current_index"] += 1
+                st.rerun()
+            else:
+                st.session_state["screen"] = "finished"
+                st.rerun()
 
-# --- Нижняя плашка с изображением ---
-def footer():
-    st.markdown("---", unsafe_allow_html=True)
+# ---------- Финальный экран ----------
+def finished_screen():
+    st.success("🎉 Вы просмотрели все слова!")
+    st.markdown("### Вот они:")
 
-    # Чтение и отображение изображения львёнка
-    image_path = "lion.png"
-    if Path(image_path).exists():
-        with open(image_path, "rb") as f:
-            img_bytes = f.read()
-        encoded = base64.b64encode(img_bytes).decode()
-        img_html = f'<img src="data:image/png;base64,{encoded}" width="60" style="border-radius:12px;" />'
-    else:
-        img_html = ""
+    for word in st.session_state["shuffled_words"]:
+        st.markdown(f"- {word.splitlines()[0]}")
 
-    st.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 15px; padding: 10px 0;">
-        {img_html}
-        <div class="footer-text" style="font-style: italic; font-size: 18px;">
-            С любовью для львёнка ❤️
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- Инициализация ---
-def initialize():
-    if "words" not in st.session_state:
-        md_path = Path("quiz.md")  # Поменяли на новый файл quiz.md
-        if not md_path.exists():
-            st.error("Файл quiz.md не найден.")
-            return
-        with open(md_path, encoding="utf-8") as f:
-            content = f.read()
-        st.session_state["words"] = parse_words(content)
-    if "screen" not in st.session_state:
+    if st.button("↩️ На главный экран"):
         st.session_state["screen"] = "main"
-    if "current_index" not in st.session_state:
-        st.session_state["current_index"] = 0
-    if "dark_mode" not in st.session_state:
-        st.session_state["dark_mode"] = False
-    if "word_count_choice" not in st.session_state:
-        st.session_state["word_count_choice"] = 50
-    if "rerun_theme" not in st.session_state:
-        st.session_state["rerun_theme"] = False
+        st.rerun()
 
-# --- Основной запуск ---
-def main():
-    initialize()
+# ---------- Запуск ----------
+if st.session_state["screen"] == "main":
+    main_screen()
+elif st.session_state["screen"] == "study":
+    study_screen()
+elif st.session_state["screen"] == "finished":
+    finished_screen()
 
-    # Применяем тему в начале
-    apply_theme()
-
-    if st.session_state["screen"] == "main":
-        main_screen()
-    elif st.session_state["screen"] == "study":
-        study_screen()
-
-    footer()
-
-if __name__ == "__main__":
-    main()
+# ---------- Нижняя плашка ----------
+st.markdown("---")
+st.image("lion.png", width=50)
+st.markdown("_С любовью для львёнка ❤️_", unsafe_allow_html=True)
