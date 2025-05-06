@@ -40,10 +40,10 @@ def main_screen():
     if "rerun_theme" not in st.session_state:
     st.session_state["rerun_theme"] = False
 
-new_theme = st.toggle("🌙 Темная тема", key="dark_mode")
-if new_theme != st.session_state.get("current_theme", None):
-    st.session_state["current_theme"] = new_theme
-    st.session_state["rerun_theme"] = True
+    new_theme = st.toggle("🌙 Темная тема", key="dark_mode")
+    if new_theme != st.session_state.get("current_theme", None):
+       st.session_state["current_theme"] = new_theme
+       st.session_state["rerun_theme"] = True
 
 
     st.markdown("### Сколько слов учить?")
