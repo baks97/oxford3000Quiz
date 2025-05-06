@@ -9,27 +9,23 @@ st.set_page_config(page_title="Учить слова", page_icon="📚", layout=
 
 # --- Темы ---
 def apply_theme():
-    # Устанавливаем тему один раз, когда она меняется
     if st.session_state.get("dark_mode", False):
-        # Тёмная тема
         st.markdown("""
             <style>
                 body, .stApp { background-color: #121212; color: #f1f1f1; }
                 .word-card { background-color: #1e1e1e; color: #f1f1f1; }
                 .footer-text { color: #ffcccc; }
-                .stCheckbox > label { color: #fff; }
             </style>
         """, unsafe_allow_html=True)
     else:
-        # Светлая тема (цвет топленого молока)
         st.markdown("""
             <style>
                 body, .stApp { background-color: #f5e0c3; color: black; }
                 .word-card { background-color: #ffffff; color: black; }
                 .footer-text { color: #e63946; }
-                .stCheckbox > label { color: black; }
             </style>
         """, unsafe_allow_html=True)
+
 
 # --- Парсинг слов ---
 def parse_words(md_text):
@@ -40,9 +36,13 @@ def parse_words(md_text):
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Переключатель темы
-    theme_icon = "🌙" if st.session_state.get("dark_mode", False) else "🌞"
-    theme_label = "🌙" if st.session_state.get("dark_mode", False) else "🌞"
+    # Тема: Ползунок с иконками 🌞/🌙 без надписей
+    col1, col2 = st.columns([1, 9])
+    with col1:
+        if st.button("🌞" if not st.session_state.get("dark_mode", False) else "🌙"):
+           st.session_state["dark_mode"] = not st.session_state["dark_mode"]
+           st.rerun()
+
     
     # Переключатель темы как ползунок
     st.markdown(f"""
