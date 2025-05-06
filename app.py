@@ -14,6 +14,9 @@ def parse_md_file(filename):
     words = []
     for entry in entries:
         lines = entry.strip().splitlines()
+        if len(lines) < 3:
+            continue  # пропустить карточки с отсутствием обязательных строк
+
         word = lines[0].strip()
         transcription = lines[1].strip()
         pos = lines[2].strip()
@@ -60,6 +63,7 @@ def parse_md_file(filename):
         })
 
     return words
+
 
 # Инициализация состояния
 if "page" not in st.session_state:
