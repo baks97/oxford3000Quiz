@@ -53,9 +53,9 @@ def footer():
     st.markdown("---")
     cols = st.columns([1, 8])
     with cols[0]:
-        st.image("lion.png", width=50)
+        st.image("lion.png", width=45)
     with cols[1]:
-        st.markdown("### с любовью для львёнка ❤️")
+        st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
 
 # Инициализация
 def initialize():
