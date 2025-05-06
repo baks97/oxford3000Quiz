@@ -19,10 +19,10 @@ def apply_theme():
             </style>
         """, unsafe_allow_html=True)
     else:
-        # Светлая тема
+        # Светлая тема (цвет топленого молока)
         st.markdown("""
             <style>
-                body, .stApp { background-color: #fdf6f0; color: black; }
+                body, .stApp { background-color: #f5e0c3; color: black; }
                 .word-card { background-color: #ffffff; color: black; }
                 .footer-text { color: #e63946; }
             </style>
@@ -45,13 +45,31 @@ def main_screen():
 
     # Выбор количества слов
     st.markdown("### Сколько слов учить?")
-    word_count = st.radio("Выберите:", [20, 30, 50], horizontal=True, key="word_count_choice")
-
-    if st.button("🚀 Начать учить слова", use_container_width=True):
-        st.session_state["screen"] = "study"
-        st.session_state["current_index"] = 0
-        st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=word_count)
-        st.rerun()
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("20 слов", use_container_width=True):
+            st.session_state["word_count_choice"] = 20
+            st.session_state["screen"] = "study"
+            st.session_state["current_index"] = 0
+            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=20)
+            st.session_state["rerun_theme"] = False
+            st.rerun()
+    with col2:
+        if st.button("30 слов", use_container_width=True):
+            st.session_state["word_count_choice"] = 30
+            st.session_state["screen"] = "study"
+            st.session_state["current_index"] = 0
+            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=30)
+            st.session_state["rerun_theme"] = False
+            st.rerun()
+    with col3:
+        if st.button("50 слов", use_container_width=True):
+            st.session_state["word_count_choice"] = 50
+            st.session_state["screen"] = "study"
+            st.session_state["current_index"] = 0
+            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=50)
+            st.session_state["rerun_theme"] = False
+            st.rerun()
 
 # --- Экран изучения слов ---
 def study_screen():
