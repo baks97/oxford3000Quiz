@@ -3,103 +3,151 @@ import random
 import json
 import os
 
-# Загрузка данных о пользователях из файла
+# Загружаем слова из файла words.md
+def load_words_from_file():
+    with open("words.md", "r", encoding="utf-8") as f:
+        words = f.read().splitlines()
+    return words
+
+# Инициализация сессии
+if "words" not in st.session_state:
+    st.session_state["words"] = load_words_from_file()
+if "screen" not in st.session_state:
+    st.session_state["screen"] = "main"
+if "current_index" not in st.session_state:
+    st.session_state["current_index"] = 0
+if "shuffled_words" not in st.session_state:
+    st.session_state["shuffled_words"] = []
+if "dark_mode" not in st.session_state:
+    st.session_state["dark_mode"] = False
+if "user" not in st.session_state:
+    st.session_state["user"] = "lion"  # default user
+
+# Функция для загрузки или сохранения данных пользователя
 def load_user_data():
-    if os.path.exists("user_data.json"):
-        with open("user_data.json", "r", encoding="utf-8") as file:
-            return json.load(file)
-    else:
-        return {"lion": {"hard_words": [], "viewed_words": []},
-                "shark": {"hard_words": [], "viewed_words": []}}
+    if not os.path.exists("user_data.json"):
+        return {}
+    with open("user_data.json", "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return {}  # если файл пустой или поврежден, возвращаем пустой словарь
 
-# Сохранение данных о пользователе в файл
-def save_user_data(data):
-    with open("user_data.json", "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
+def save_user_data(user_data):
+    with open("user_data.json", "w", encoding="utf-8") as f:
+        json.dump(user_data, f, ensure_ascii=False, indent=4)
 
-# Главная страница
+user_data = load_user_data()
+
+# Функция для переключения темы
+def toggle_theme():
+    st.session_state["dark_mode"] = not st.session_state["dark_mode"]
+
+# Главный экран
 def main_screen():
     st.title("📚 Учим английские слова")
 
-    # Переключение между львенком и акуленком
-    if "user" not in st.session_state:
-        st.session_state["user"] = "lion"  # по умолчанию львенок
+    # Переключение темы
+    theme_button = "🌙 Переключить тему" if not st.session_state["dark_mode"] else "☀️ Переключить тему"
+    if st.button(theme_button):
+        toggle_theme()
+        st.rerun()
 
-    user_icon = "🦁" if st.session_state["user"] == "lion" else "🦈"
-
-    # Кнопка для смены пользователя
-    if st.button(f"Переключиться на {user_icon}"):
+    # Переключение пользователя
+    user_button = "🦁 Львенок" if st.session_state["user"] == "lion" else "🦈 Акуленок"
+    if st.button(user_button):
         st.session_state["user"] = "shark" if st.session_state["user"] == "lion" else "lion"
-        st.experimental_rerun()  # Перезапуск страницы, чтобы применить изменения
-
-    # Отображение значка текущего пользователя
-    st.markdown(f"**Активный пользователь:** {user_icon}")
+        st.rerun()
 
     # Выбор количества слов для изучения
     st.markdown("### Сколько слов учить?")
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("20 слов", use_container_width=True):
-            st.session_state["word_count_choice"] = 20
-            st.session_state["screen"] = "study"
-            st.session_state["current_index"] = 0
-            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=20)
-            st.session_state["rerun_theme"] = False
-            st.rerun()
+            start_study(20)
     with col2:
         if st.button("30 слов", use_container_width=True):
-            st.session_state["word_count_choice"] = 30
-            st.session_state["screen"] = "study"
-            st.session_state["current_index"] = 0
-            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=30)
-            st.session_state["rerun_theme"] = False
-            st.rerun()
+            start_study(30)
     with col3:
         if st.button("50 слов", use_container_width=True):
-            st.session_state["word_count_choice"] = 50
-            st.session_state["screen"] = "study"
-            st.session_state["current_index"] = 0
-            st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=50)
-            st.session_state["rerun_theme"] = False
-            st.rerun()
+            start_study(50)
 
-# Экран изучения слов
+    # Плашка с картинкой
+    st.markdown(f'<div style="text-align: center;"><img src="lion.png" width="100"/><p>С любовью для львёнка ❤️</p></div>', unsafe_allow_html=True)
+
+# Функция начала обучения
+def start_study(word_count):
+    st.session_state["screen"] = "study"
+    st.session_state["current_index"] = 0
+    st.session_state["word_count_choice"] = word_count
+    st.session_state["shuffled_words"] = random.sample(st.session_state["words"], k=word_count)
+    st.session_state["rerun_theme"] = False
+    st.rerun()
+
+# Страница изучения слов
 def study_screen():
-    user = st.session_state["user"]
-    word = st.session_state["shuffled_words"][st.session_state["current_index"]]
+    words = st.session_state["shuffled_words"]
+    index = st.session_state["current_index"]
 
-    # Отображение карточки со словом
-    st.markdown(f"### {word}")
-    
-    # Кнопки для перехода вперед и на главный экран
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("🤔 Я не знаю", use_container_width=True):
-            # Добавляем слово в список трудных слов текущего пользователя
-            user_data = load_user_data()
-            if word not in user_data[user]["hard_words"]:
-                user_data[user]["hard_words"].append(word)
-            save_user_data(user_data)
-            st.session_state["current_index"] += 1
-            st.experimental_rerun()
+    if index < len(words):
+        current_word = words[index]
+        st.subheader(f"Слово {index + 1} из {len(words)}: {current_word}")
 
-    with col2:
-        if st.button("➡️ Вперед", use_container_width=True):
-            if st.session_state["current_index"] < len(st.session_state["shuffled_words"]) - 1:
+        # Кнопки управления
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Я не знаю"):
+                add_to_hard_words(current_word)
+        with col2:
+            if st.button("Вперед"):
                 st.session_state["current_index"] += 1
-                st.experimental_rerun()
+                st.rerun()
+        with col3:
+            if st.button("На главный экран"):
+                st.session_state["screen"] = "main"
+                st.session_state["current_index"] = 0
+                st.session_state["shuffled_words"] = []
+                st.rerun()
 
-    with col3:
-        if st.button("🏠 На главный экран", use_container_width=True):
-            st.session_state["screen"] = "main"
-            st.experimental_rerun()
+        # Значок активного пользователя
+        active_user_icon = "🦁 Львенок" if st.session_state["user"] == "lion" else "🦈 Акуленок"
+        st.markdown(f"### Активный пользователь: {active_user_icon}")
+    else:
+        show_results_screen()
 
-# Логика отображения экрана
-if "screen" not in st.session_state:
-    st.session_state["screen"] = "main"  # по умолчанию главный экран
+# Функция для добавления трудного слова в список
+def add_to_hard_words(word):
+    user = st.session_state["user"]
+    if user not in user_data:
+        user_data[user] = {"hard_words": [], "viewed_words": []}
+    
+    if word not in user_data[user]["hard_words"]:
+        user_data[user]["hard_words"].append(word)
+    
+    # Сохраняем данные
+    save_user_data(user_data)
 
+# Страница с результатами
+def show_results_screen():
+    st.header("Вы изучили следующие слова:")
+    user = st.session_state["user"]
+    words_learned = user_data.get(user, {}).get("viewed_words", [])
+    if words_learned:
+        st.write(", ".join(words_learned))
+    else:
+        st.write("Еще не изучены слова.")
+    
+    # Переключение обратно на главный экран
+    if st.button("На главный экран"):
+        st.session_state["screen"] = "main"
+        st.session_state["current_index"] = 0
+        st.session_state["shuffled_words"] = []
+        st.rerun()
+
+# Отображение экрана в зависимости от состояния
 if st.session_state["screen"] == "main":
     main_screen()
 elif st.session_state["screen"] == "study":
     study_screen()
+else:
+    st.error("Неизвестный экран!")
