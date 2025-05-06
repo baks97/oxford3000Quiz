@@ -151,7 +151,7 @@ if st.session_state.page == "main":
     st.markdown(
         """
         <div style="display: flex; justify-content: center;">
-            <img src="lion.png" width="10" />
+            <img src="lion.png" width="50" />
         </div>
         """,
         unsafe_allow_html=True
