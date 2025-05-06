@@ -98,12 +98,9 @@ def main_screen():
     """, unsafe_allow_html=True)
 
     # Обработчик события для переключения темы
-    if st.checkbox("Переключить тему", key="theme_switch", value=st.session_state.get("dark_mode", False)):
+    if st.session_state.get("theme_switch", False):
         st.session_state["dark_mode"] = not st.session_state["dark_mode"]
         st.experimental_rerun()  # Перезапуск страницы, чтобы применить новую тему
-
-    # Применяем тему
-    apply_theme()
 
     # Выбор количества слов
     st.markdown("### Сколько слов учить?")
