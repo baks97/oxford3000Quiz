@@ -72,11 +72,27 @@ def initialize():
 
 # Основная логика
 def main():
-    initialize()
+    # Надежная инициализация
+    if "words" not in st.session_state:
+        md_path = Path("words.md")
+        if not md_path.exists():
+            st.error("Файл words.md не найден.")
+            return
+        with open(md_path, encoding="utf-8") as f:
+            content = f.read()
+        st.session_state["words"] = parse_words(content)
+
+    if "screen" not in st.session_state:
+        st.session_state["screen"] = "main"
+
+    if "current_index" not in st.session_state:
+        st.session_state["current_index"] = 0
+
     if st.session_state["screen"] == "main":
         main_screen()
     elif st.session_state["screen"] == "study":
         study_screen()
+
     footer()
 
 if __name__ == "__main__":
