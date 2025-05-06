@@ -2,68 +2,46 @@ import streamlit as st
 import random
 
 def parse_md_file(filename):
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         content = f.read()
-
-    entries = content.split("\n\n\n")  # разделение по пустым строкам
+    entries = content.split("## 🔤 ")[1:]
     words = []
-
     for entry in entries:
         lines = entry.strip().splitlines()
         if len(lines) < 3:
-            continue  # пропускаем неполные записи
-
+            continue
         word = lines[0].strip()
         transcription = lines[1].strip()
-
-        # Ищем строку, содержащую часть речи
-        part_of_speech = ""
-        for line in lines[2:]:
-            if line.startswith("*") and line.endswith("*"):
-                part_of_speech = line.strip("*").strip()
-                break
-
-        # Извлекаем блоки
+        pos = lines[2].strip()
         examples_block = ""
-        meanings_block = ""
-        translations_block = ""
-
-        in_examples = False
-        in_meanings = False
-        in_translations = False
-
-        for line in lines:
+        cambridge_block = ""
+        rest_block = ""
+        current_block = None
+        for line in lines[3:]:
             if line.startswith("### 🧾"):
-                in_examples = True
-                in_meanings = False
-                in_translations = False
+                current_block = "examples"
                 examples_block += line + "\n"
-            elif line.startswith("### 📘"):
-                in_examples = False
-                in_meanings = True
-                in_translations = False
-                meanings_block += line + "\n"
             elif line.startswith("### 🌍"):
-                in_examples = False
-                in_meanings = False
-                in_translations = True
-                translations_block += line + "\n"
-            elif in_examples:
-                examples_block += line + "\n"
-            elif in_meanings:
-                meanings_block += line + "\n"
-            elif in_translations:
-                translations_block += line + "\n"
-
+                current_block = "cambridge"
+                cambridge_block += line + "\n"
+            elif line.startswith("### 📘") or line.startswith("### 📌"):
+                current_block = "rest"
+                rest_block += line + "\n"
+            elif current_block:
+                if current_block == "examples":
+                    examples_block += line + "\n"
+                elif current_block == "cambridge":
+                    cambridge_block += line + "\n"
+                elif current_block == "rest":
+                    rest_block += line + "\n"
         words.append({
             "word": word,
             "transcription": transcription,
-            "part_of_speech": part_of_speech,
+            "pos": pos,
             "examples": examples_block.strip(),
-            "meanings": meanings_block.strip(),
-            "translations": translations_block.strip()
+            "cambridge": cambridge_block.strip(),
+            "rest": rest_block.strip()
         })
-
     return words
 
 # Сессия
@@ -166,12 +144,12 @@ elif st.session_state.page == "test":
                 st.session_state.show_card = False
         st.button("🏠 Главный экран", on_click=lambda: st.session_state.update({"page": "main"}))
         
-# Надпись и изображение внизу главного экрана
+# Только на главном экране показываем изображение
 if st.session_state.page == "main":
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.image("lion.png", use_column_width=True, caption="", output_format="auto")
-    st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
-else:
+    st.image("lion.png", width=100)  # Укажи нужный размер или убери width
+    )
+
 # Надпись внизу
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic;'>с любовью от львёнка ❤️</p>", unsafe_allow_html=True)
