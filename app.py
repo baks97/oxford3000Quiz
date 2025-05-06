@@ -7,9 +7,9 @@ if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
     st.session_state.needs_rerun = False
     st.rerun()
 
-
 MD_FILE = "quiz.md"
-STATS_FILE = "stats.json"
+
+st.set_page_config(page_title="🧠 Английский квиз", layout="centered")
 
 st.set_page_config(page_title="Английский квиз", layout="wide")
 st.title("🧠 Английский квиз по словам")
