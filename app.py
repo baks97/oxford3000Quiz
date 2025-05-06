@@ -148,7 +148,6 @@ elif st.session_state.page == "test":
 if st.session_state.page == "main":
     st.markdown("<hr>", unsafe_allow_html=True)
     st.image("lion.png", width=120)  # Укажи нужный размер или убери width
-    )
 
 # Надпись внизу
 st.markdown("<hr>", unsafe_allow_html=True)
