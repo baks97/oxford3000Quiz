@@ -42,7 +42,7 @@ def main_screen():
 
     # Переключатель темы
     theme_icon = "🌙" if st.session_state.get("dark_mode", False) else "🌞"
-    theme_label = "Тёмная тема" if st.session_state.get("dark_mode", False) else "Светлая тема"
+    theme_label = "🌙" if st.session_state.get("dark_mode", False) else "🌞"
     
     # Переключатель темы как ползунок
     st.markdown(f"""
