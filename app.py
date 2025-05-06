@@ -1,6 +1,11 @@
 import streamlit as st
 import random
-import re
+import time
+
+# В начале скрипта
+if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
+    st.session_state.needs_rerun = False
+    st.rerun()
 
 MD_FILE = "quiz.md"
 
@@ -88,6 +93,7 @@ if st.session_state.page == "start":
                 st.session_state.index = 0
                 st.session_state.view_all = False
                 st.session_state.page = "quiz"
+                st.session_state.needs_rerun = True
 
     st.markdown(" ")
     st.write("Или:")
@@ -97,7 +103,8 @@ if st.session_state.page == "start":
         st.session_state.index = 0
         st.session_state.view_all = True
         st.session_state.page = "quiz"
-
+        st.session_state.needs_rerun = True
+        
 elif st.session_state.page == "quiz":
     words = st.session_state.words
     i = st.session_state.index
