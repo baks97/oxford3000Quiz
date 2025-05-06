@@ -13,12 +13,19 @@ if "current_user" not in st.session_state:
 if "dark_mode" not in st.session_state:
     st.session_state["dark_mode"] = True  # Темная тема по умолчанию
 
-# Загружаем данные пользователей
+# Функция для загрузки данных пользователей
 def load_user_data():
     if os.path.exists("user_data.json"):
-        with open("user_data.json", "r") as file:
-            return json.load(file)
-    return {}
+        try:
+            with open("user_data.json", "r") as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            # Если файл поврежден, создаем новый
+            st.warning("Ошибка в файле данных, создается новый.")
+            return {"lion": {"viewed_words": [], "hard_words": []}, "shark": {"viewed_words": [], "hard_words": []}}
+    else:
+        # Если файла нет, создаем новый
+        return {"lion": {"viewed_words": [], "hard_words": []}, "shark": {"viewed_words": [], "hard_words": []}}
 
 # Сохраняем данные пользователей
 def save_user_data():
