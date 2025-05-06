@@ -53,9 +53,9 @@ def footer():
     st.markdown("---")
     cols = st.columns([1, 8])
     with cols[0]:
-        st.image("lion.png", width=60)
+        st.image("lion.png", width=50)
     with cols[1]:
-        st.markdown("### С любовью для львёнка ❤️")
+        st.markdown("### с любовью для львёнка ❤️")
 
 # Инициализация
 def initialize():
@@ -74,7 +74,7 @@ def initialize():
 def main():
     # Надежная инициализация
     if "words" not in st.session_state:
-        md_path = Path("words.md")
+        md_path = Path("quiz.md")
         if not md_path.exists():
             st.error("Файл words.md не найден.")
             return
